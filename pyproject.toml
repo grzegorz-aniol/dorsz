@@ -1,0 +1,24 @@
+[project]
+name = "dorsz"
+version = "0.1.0"
+description = "Asystent analizy przyczyn źródłowych (5x Dlaczego + Ishikawa)"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "langfuse>=3.10.1",
+    "openai>=2.8.1",
+    "openai-agents>=0.6.1",
+    "python-dotenv>=1.2.1",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.1",
+]
+
+[tool.pytest.ini_options]
+# Show print() output live in the console while still allowing capsys to capture it
+addopts = "--capture=tee-sys -rP"
+# Also stream logging to console (if you switch prints to logging)
+log_cli = true
+log_cli_level = "WARNING"

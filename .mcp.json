@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "openai_agents_docs": {
+      "type": "sse",
+      "url": "https://gitmcp.io/openai/openai-agents-python"
+    }
+  }
+}
