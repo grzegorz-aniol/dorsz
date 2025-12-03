@@ -71,10 +71,10 @@ def setup_agents_sdk():
     agents_mod.set_tracing_disabled(True)
 
     return {
-        "Agent": agents_mod.Agent,
-        "Runner": agents_mod.Runner,
+        "agent": agents_mod.Agent,
+        "runner": agents_mod.Runner,
         "function_tool": agents_mod.function_tool,
-        "ModelSettings": agents_mod.ModelSettings,
+        "model_settings": agents_mod.ModelSettings,
     }
 
 
@@ -105,8 +105,8 @@ def make_agent(setup_agents_sdk, agent_model):
     Factory that builds an Agent with provided instructions and tools.
     Uses shared model resolved by agent_model fixture.
     """
-    Agent = setup_agents_sdk["Agent"]
-    ModelSettings = setup_agents_sdk["ModelSettings"]
+    Agent = setup_agents_sdk["agent"]
+    ModelSettings = setup_agents_sdk["model_settings"]
 
     def _make_agent(instructions: str, tools, model: str | None = None, temperature: float = 0.1):
         return Agent(
