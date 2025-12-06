@@ -1,6 +1,7 @@
 import textwrap
 from enum import Enum
 from typing import Optional
+import os
 
 from pydantic import BaseModel, Field
 
@@ -160,9 +161,12 @@ def ask_human(question: str) -> str:
     return response
 
 
+# Default model from environment (fallback)
+DEFAULT_MODEL = os.getenv("MODEL", "Bielik-4.5B-v3.0-Instruct.Q8_0.gguf")
+
 # Factory method
 def create_why5_ishikawa_agent(
-    model: str,
+    model: str | None = None,
     hooks: Optional[AgentHooks] = None,
     temperature: float = TEMPERATURE,
 ) -> Agent:
@@ -180,7 +184,7 @@ def create_why5_ishikawa_agent(
     return Agent(
         name="Why5-Ishikawa",
         instructions=PROMPT_WHY5,
-        model=model,
+        model=model or DEFAULT_MODEL,
         model_settings=ModelSettings(temperature=temperature),
         tools=[ask_human],
         hooks=hooks,

@@ -1,5 +1,6 @@
 import argparse
 import logging
+import os
 from typing import Optional
 
 import dotenv
@@ -64,13 +65,14 @@ def setup_logging():
     logging.getLogger(__name__).setLevel(logging.INFO)
 
 # Default provider configuration (general runtime)
-DEFAULT_PROVIDER = "lms"
+DEFAULT_PROVIDER = "local"
 DEFAULT_LMS_BASE_URL = "http://localhost:1234/v1"
-DEFAULT_OLLAMA_BASE_URL = "http://localhost:11434/v1"
+# Local provider settings overridable via env
+LOCAL_BASE_URL = os.getenv("LOCAL_BASE_URL", DEFAULT_LMS_BASE_URL)
+LOCAL_API_KEY = os.getenv("LOCAL_API_KEY", "EMPTY")
 
 PROVIDER_CONFIGS = {
-    "lms": {"base_url": DEFAULT_LMS_BASE_URL, "api_key": "lms"},
-    "ollama": {"base_url": DEFAULT_OLLAMA_BASE_URL, "api_key": "ollama"},
+    "local": {"base_url": LOCAL_BASE_URL, "api_key": LOCAL_API_KEY},
     "openai": {"base_url": None, "api_key": None},  # Uses OpenAI defaults
 }
 
@@ -93,6 +95,9 @@ AGENT_DEFAULT_INPUTS = {
     "temperature_check": "Jaka jest pogoda w Gliwicach?",
 }
 
+# Default model (can be overridden via env MODEL)
+DEFAULT_MODEL = os.getenv("MODEL", "Bielik-4.5B-v3.0-Instruct.Q8_0.gguf")
+
 
 def parse_args():
     """Parse command line arguments (general runtime).
@@ -111,14 +116,15 @@ def parse_args():
         "--provider",
         type=str,
         default=DEFAULT_PROVIDER,
-        choices=["lms", "ollama", "openai"],
-        help="Provider do użycia (domyślnie: lms)",
+        choices=["local", "openai"],
+        help="Provider do użycia (domyślnie: local)",
     )
     parser.add_argument(
         "--model",
         type=str,
-        required=True,
-        help="Nazwa modelu do użycia (wymagany)",
+        required=False,
+        default=None,
+        help="Nazwa modelu do użycia (jeśli pominięta, użyje ENV MODEL lub domyślnego).",
     )
     return parser.parse_args()
 
@@ -155,13 +161,13 @@ async def process_stream(result: RunResultStreaming):
 
 
 def create_client(provider: str) -> AsyncOpenAI:
-    """Tworzy i ustawia domyślnego klienta OpenAI/LMS/Ollama (ogólny runtime)."""
+    """Tworzy i ustawia domyślnego klienta OpenAI lub lokalnego endpointu (ogólny runtime)."""
     provider_config = PROVIDER_CONFIGS[provider]
     if provider == "openai":
         # For OpenAI, use default client (requires OPENAI_API_KEY env var)
         client = AsyncOpenAI()
     else:
-        # For local providers (lms, ollama)
+        # For local provider
         client = AsyncOpenAI(
             base_url=provider_config["base_url"],
             api_key=provider_config["api_key"],
@@ -224,16 +230,19 @@ async def main():
     # Configure client based on provider
     create_client(args.provider)
 
+    # Determine model to use with env fallback
+    model_to_use = args.model or os.getenv("MODEL", DEFAULT_MODEL)
+
     # Build the agent using selected factory (agent-specific config resides in dedicated module)
     agent = AGENT_FACTORIES[args.agent](
-        model=args.model,
+        model=model_to_use,
         hooks=CustomAgentHooks(),
         temperature=0.1,
     )
 
     print("DORSZ - Dokładne Odpytywanie Rozpoznające Sedno Zagadnienia")
     print(f"Provider: {args.provider}")
-    print(f"Model: {args.model}")
+    print(f"Model: {model_to_use}")
     print(f"Agent: {args.agent}")
 
     # Initial input for agent runtime

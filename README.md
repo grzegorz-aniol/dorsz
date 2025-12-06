@@ -7,7 +7,7 @@ Uniwersalny runtime dla wielu agentów AI (obecnie: Why5-Ishikawa oraz Temperatu
 1) Wymagania:
 - Python >= 3.13
 - [uv](https://github.com/astral-sh/uv)
-- Uruchomiony provider LLM (co najmniej jeden z): LMS Studio (LM Studio), Ollama lub OpenAI
+- Uruchomiony provider LLM: lokalny endpoint OpenAI-compatible (np. LMS Studio) lub OpenAI
 
 2) Instalacja uv:
 - macOS (Homebrew):
@@ -28,12 +28,11 @@ uv sync
 
 4) Uruchom pierwszy agent (przykład z LMS Studio i modelem Bielik):
 ```bash
-uv run python main.py why5_ishikawa --provider lms --model bielik-11b-v2.6-instruct
+uv run python main.py why5_ishikawa --provider local --model bielik-11b-v2.6-instruct
 ```
 
 Uwaga:
-- Dla LMS Studio (LM Studio) włącz endpoint OpenAI-compatible na `http://localhost:1234/v1`.
-- Dla Ollama upewnij się, że serwer działa na `http://localhost:11434/v1` i masz pobrany model (`ollama pull ...`).
+- Dla lokalnego endpointu (np. LMS Studio) włącz OpenAI-compatible API na `http://localhost:1234/v1`.
 - Dla OpenAI ustaw `OPENAI_API_KEY` w środowisku lub pliku `.env`.
 
 ---
@@ -42,23 +41,21 @@ Uwaga:
 
 Ogólny wzorzec:
 ```bash
-uv run python main.py <agent_id> --provider <lms|ollama|openai> --model <nazwa_modelu>
+uv run python main.py <agent_id> --provider <local|openai> [--model <nazwa_modelu>]
 ```
 
 Parametry:
 - `agent_id` (wymagany): `why5_ishikawa` | `temperature_check`
-- `--provider` (opcjonalny): `lms` (domyślny), `ollama`, `openai`
-- `--model` (wymagany): nazwa modelu zgodna z wybranym providerem
+- `--provider` (opcjonalny): `local` (domyślny), `openai`
+- `--model` (opcjonalny): jeśli pominięty, użyje ENV `MODEL` lub domyślnego; nazwa modelu zgodna z wybranym providerem
 
 Przykłady (z użyciem modelu Bielik oraz innych):
 
 - Why5-Ishikawa:
 ```bash
-# LMS Studio + Bielik
-uv run python main.py why5_ishikawa --provider lms --model bielik-11b-v2.6-instruct
+# Lokalny endpoint + Bielik
+uv run python main.py why5_ishikawa --provider local --model bielik-11b-v2.6-instruct
 
-# Ollama (przykładowy model)
-uv run python main.py why5_ishikawa --provider ollama --model llama3.2
 
 # OpenAI (wymaga OPENAI_API_KEY)
 uv run python main.py why5_ishikawa --provider openai --model gpt-4o
@@ -66,11 +63,9 @@ uv run python main.py why5_ishikawa --provider openai --model gpt-4o
 
 - Temperature-Check:
 ```bash
-# LMS Studio + Bielik
-uv run python main.py temperature_check --provider lms --model bielik-11b-v2.6-instruct
+# Lokalny endpoint + Bielik
+uv run python main.py temperature_check --provider local --model bielik-11b-v2.6-instruct
 
-# Ollama (przykładowy model)
-uv run python main.py temperature_check --provider ollama --model llama3.2
 
 # OpenAI (wymaga OPENAI_API_KEY)
 uv run python main.py temperature_check --provider openai --model gpt-4o
@@ -106,13 +101,13 @@ Strukturalny output (Pydantic): zdefiniowany w `agents_why5_ishikawa.py` jako `W
 
 Przykład uruchomienia z Bielik:
 ```bash
-uv run python main.py why5_ishikawa --provider lms --model bielik-11b-v2.6-instruct
+uv run python main.py why5_ishikawa --provider local --model bielik-11b-v2.6-instruct
 ```
 
 Przykładowa sesja (fragment):
 ```
 DORSZ - Dokładne Odpytywanie Rozpoznające Sedno Zagadnienia
-Provider: lms
+Provider: local
 Model: bielik-11b-v2.6-instruct
 Agent: why5_ishikawa
 Wpisz swój problem lub pytanie, aby rozpocząć analizę.
@@ -150,7 +145,7 @@ Domyślne wejście:
 
 Przykład uruchomienia z Bielik:
 ```bash
-uv run python main.py temperature_check --provider lms --model bielik-11b-v2.6-instruct
+uv run python main.py temperature_check --provider local --model bielik-11b-v2.6-instruct
 ```
 
 ---
@@ -158,11 +153,10 @@ uv run python main.py temperature_check --provider lms --model bielik-11b-v2.6-i
 ## Konfiguracja providerów
 
 Domyślne adresy bazowe (zdefiniowane w `main.py`):
-- LMS Studio: `http://localhost:1234/v1`
-- Ollama: `http://localhost:11434/v1`
+- Lokalny endpoint (np. LMS Studio): `http://localhost:1234/v1`
 - OpenAI: używa domyślnych ustawień biblioteki OpenAI (wymaga `OPENAI_API_KEY`)
 
-Zmienna `--provider` przyjmuje wartości: `lms` (domyślny), `ollama`, `openai`.
+Zmienna `--provider` przyjmuje wartości: `local` (domyślny), `openai`.
 
 ---
 
@@ -184,10 +178,34 @@ Zmienna `--provider` przyjmuje wartości: `lms` (domyślny), `ollama`, `openai`.
 
 Plik `.env` (opcjonalny), wczytywany automatycznie:
 ```bash
-# Dla OpenAI:
-OPENAI_API_KEY=sk-...
+# Default model (used if --model is omitted)
+MODEL=Bielik-4.5B-v3.0-Instruct.Q8_0.gguf
+
+# OpenAI (cloud):
+OPENAI_API_KEY=...
+
+# Local (OpenAI-compatible) endpoint:
+LOCAL_BASE_URL=http://localhost:1234/v1
+LOCAL_API_KEY=EMPTY
 
 # Opcjonalnie: inne ustawienia środowiskowe
+```
+
+---
+
+## Testy
+
+Aby uruchomić testy integracyjne:
+
+- Wymagania: uruchomiony lokalny serwer zgodny z OpenAI API pod adresem `http://localhost:1234/v1`. Jeśli serwer nie jest osiągalny, testy zostaną pominięte.
+- Model: testy używają modelu w kolejności: 1) parametr `--model`, 2) zmienna środowiskowa `MODEL`, 3) domyślny z `.env.example`.
+- Klucze/sekrety: `OPENAI_API_KEY` nie jest wymagany; testy ustawiają go automatycznie na `EMPTY`.
+
+Przykłady:
+```bash
+uv run pytest
+uv run pytest -q
+uv run pytest -q --model Bielik-4.5B-v3.0-Instruct.Q8_0.gguf
 ```
 
 ---
@@ -201,6 +219,5 @@ OPENAI_API_KEY=sk-...
 
 ## Dodatkowe uwagi
 
-- Wybór modelu (`--model`) jest wymagany dla wszystkich providerów.
-- Dla LMS Studio i Ollama wymagane jest uruchomienie lokalnego serwera zgodnego z OpenAI API pod wskazanymi adresami.
-
+- Parametr `--model` jest opcjonalny; jeśli pominięty, użyty zostanie `MODEL` z env lub domyślny.
+- Dla lokalnego endpointu (np. LMS Studio) wymagane jest uruchomienie serwera zgodnego z OpenAI API pod wskazanym adresem.

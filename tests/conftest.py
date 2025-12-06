@@ -9,7 +9,7 @@ def pytest_addoption(parser):
         "--model",
         action="store",
         default=None,
-        help="Override model for agent tests (falls back to env AGENT_TEST_MODEL, then default).",
+        help="Override model for agent tests (falls back to env MODEL, then default).",
     )
 
 
@@ -18,13 +18,13 @@ def agent_model(pytestconfig):
     """
     Resolve model in order of priority:
       1) CLI: --model
-      2) ENV: AGENT_TEST_MODEL
-      3) Default: bielik-4.5b-v3.0-instruct-mlx
+      2) ENV: MODEL
+      3) Default: Bielik-4.5B-v3.0-Instruct.Q8_0.gguf
     """
     cli_value = pytestconfig.getoption("--model")
     if cli_value:
         return cli_value
-    model = os.getenv("AGENT_TEST_MODEL", "bielik-4.5b-v3.0-instruct-mlx")
+    model = os.getenv("MODEL", "Bielik-4.5B-v3.0-Instruct.Q8_0.gguf")
     print("Model: ", model)
     return model
 
@@ -46,8 +46,8 @@ def setup_agents_sdk():
 
     AsyncOpenAI = lf_mod.AsyncOpenAI
 
-    # Base URL can be overridden via AGENT_TEST_BASE_URL
-    base_url = os.getenv("AGENT_TEST_BASE_URL", "http://localhost:1234/v1")
+    # Base URL for local OpenAI-compatible server (fixed for tests)
+    base_url = "http://localhost:1234/v1"
     os.environ.setdefault("OPENAI_API_KEY", "EMPTY")
 
     # Check connectivity to base URL; skip if not reachable
@@ -58,7 +58,7 @@ def setup_agents_sdk():
         with socket.create_connection((host, port), timeout=1.5):
             pass
     except OSError:
-        pytest.skip(f"LLM endpoint not reachable at {host}:{port} (base_url={base_url}). Set AGENT_TEST_BASE_URL or start the server.")
+        pytest.skip(f"LLM endpoint not reachable at {host}:{port} (base_url={base_url}). Start the local server at {base_url}.")
 
     client = AsyncOpenAI(
         base_url=base_url,
@@ -75,6 +75,7 @@ def setup_agents_sdk():
         "runner": agents_mod.Runner,
         "function_tool": agents_mod.function_tool,
         "model_settings": agents_mod.ModelSettings,
+        "RunConfig": agents_mod.RunConfig,
     }
 
 
@@ -90,6 +91,7 @@ def make_tool(setup_agents_sdk):
         def get_weather(city: str) -> str:
             """doc will be set dynamically"""
             print("*** TOOL get_weather called ***")
+            print("Tool params: city =", city)
             return f"The weather in {city} is sunny with 22°C."
 
         # Set docstring dynamically so each test can describe the tool differently
@@ -109,12 +111,26 @@ def make_agent(setup_agents_sdk, agent_model):
     ModelSettings = setup_agents_sdk["model_settings"]
 
     def _make_agent(instructions: str, tools, model: str | None = None, temperature: float = 0.1):
+        agents_mod_local = pytest.importorskip("agents")
+
+        class SingleToolCallHooks(agents_mod_local.AgentHooks):
+            async def on_tool_end(
+                self,
+                context,
+                agent,
+                tool,
+                result: str,
+            ) -> None:
+                # Disable further tool usage after first successful call
+                agent.tools = []
+
         return Agent(
             name="Temperature-Check",
             instructions=instructions,
             model=model or agent_model,
             model_settings=ModelSettings(temperature=temperature),
             tools=list(tools) if tools else [],
+            hooks=SingleToolCallHooks(),
         )
 
     return _make_agent

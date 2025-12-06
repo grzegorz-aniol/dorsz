@@ -1,4 +1,5 @@
 from typing import Optional
+import os
 from pydantic import BaseModel, Field
 
 from agents import Agent, ModelSettings, function_tool, AgentHooks
@@ -44,8 +45,10 @@ Kroki:
 """
 
 
+DEFAULT_MODEL = os.getenv("MODEL", "Bielik-4.5B-v3.0-Instruct.Q8_0.gguf")
+
 def create_temperature_check_agent(
-    model: str,
+    model: str | None = None,
     hooks: Optional[AgentHooks] = None,
     temperature: float = 0.1,
 ) -> Agent:
@@ -55,7 +58,7 @@ def create_temperature_check_agent(
     return Agent(
         name="Temperature-Check",
         instructions=INSTRUCTIONS,
-        model=model,
+        model=model or DEFAULT_MODEL,
         model_settings=ModelSettings(temperature=temperature),
         tools=[get_temperature],
         hooks=hooks,
