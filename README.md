@@ -221,3 +221,56 @@ uv run pytest -q --model Bielik-4.5B-v3.0-Instruct.Q8_0.gguf
 
 - Parametr `--model` jest opcjonalny; jeśli pominięty, użyty zostanie `MODEL` z env lub domyślny.
 - Dla lokalnego endpointu (np. LMS Studio) wymagane jest uruchomienie serwera zgodnego z OpenAI API pod wskazanym adresem.
+
+---
+
+## Inferencja modelu Bielik (lokalnie, GGUF)
+
+Poniżej opisano, jak uruchomić inferencję lokalnego modelu oraz jak wpiąć go do DORSZ jako lokalny provider.
+
+### Krok 1: Pobierz model GGUF
+
+- Przejdź do repozytorium na Hugging Face, np.:
+  https://huggingface.co/speakleash/Bielik-4.5B-v3.0-Instruct-GGUF/tree/main
+- Pobierz wariant w oczekiwanej kwantyzacji (np. Q8_0) lub model bez kwantyzacji.
+- Umieść plik w lokalnym katalogu, np. `./Bielik-4.5B-v3.0-Instruct-GGUF/`.
+
+Przykładowy plik: `Bielik-4.5B-v3.0-Instruct.Q8_0.gguf`
+
+### Opcja A: CLI (llama.cpp)
+
+1) Instalacja llama.cpp:
+- macOS (Homebrew):
+```bash
+brew install llama.cpp
+```
+- Alternatywnie z kodu źródłowego: https://github.com/ggml-org/llama.cpp
+
+2) Uruchomienie serwera OpenAI-compatible:
+```bash
+llama-server --port 1234 -m ./Bielik-4.5B-v3.0-Instruct-GGUF/Bielik-4.5B-v3.0-Instruct.Q8_0.gguf
+```
+Serwer będzie dostępny pod adresem `http://localhost:1234/v1`.
+Server nie wymaga podania nazwy modelu przy wywołaniach API, ale dla spujności możemy go używać. 
+
+3) Integracja z DORSZ:
+- Upewnij się, że `LOCAL_BASE_URL=http://localhost:1234/v1` (np. w `.env`).
+- Uruchom agenta, wskazując nazwę modelu (tu: nazwę pliku GGUF):
+```bash
+uv run python main.py why5_ishikawa --provider local --model Bielik-4.5B-v3.0-Instruct.Q8_0.gguf
+```
+Analogicznie możesz uruchomić `temperature_check`.
+
+### Opcja B: UI (Jan)
+
+Jeśli wolisz interfejs graficzny, skorzystaj z projektu Jan:
+- Repozytorium: https://github.com/janhq/jan
+- Kroki:
+  1. Zainstaluj aplikację (patrz „Releases” na GitHub).
+  2. Dodaj model, wskazując pobrany plik `.gguf` (Import/Local model).
+  3. Rozmawiaj z modelem bezpośrednio w UI.
+  4. (Opcjonalnie) Jeśli w Jan dostępne jest lokalne API zgodne z OpenAI, włącz je i wskaż jego adres w `LOCAL_BASE_URL`, aby używać Jana jako providera dla DORSZ.
+
+Uwagi:
+- W przypadku ograniczeń pamięci wybierz lżejszą kwantyzację (np. Q6_K, Q5_K_M). Wersja Q8_0 to dobry kompromis jakości/szybkości na CPU.
+- Możesz ustawić domyślny model w `.env` (zmienna `MODEL`), a następnie pominąć flagę `--model` przy uruchamianiu.
