@@ -249,7 +249,7 @@ async def main():
     initial_input = AGENT_DEFAULT_INPUTS[args.agent]
 
     # Run the agent without streaming (streaming support provided by process_stream)
-    result = await Runner.run(agent, input=initial_input)
+    result = await Runner.run(agent, input=initial_input, max_turns=50)
 
     # Print the final structured result using agent-specific renderer
     summary = result.final_output

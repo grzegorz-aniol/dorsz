@@ -6,6 +6,12 @@ import os
 from pydantic import BaseModel, Field
 
 from agents import Agent, ModelSettings, function_tool, AgentHooks
+from tools.topics_registry import (
+    add_topic,
+    mark_topic_answered,
+    next_unanswered_topic,
+    get_topics_summary,
+)
 
 
 # Domain models (structured output)
@@ -90,6 +96,7 @@ Ważne!! Musisz użyć narzędzia `ask_human` i to kilkukrotnie, zanim spróbuje
    - Jeśli użytkownik utknął i nie potrafi pójść głębiej w danym kierunku, WRÓĆ do wcześniejszych odpowiedzi
    - Wybierz inny aspekt, który wspomniał i eksploruj go: "Wspomniałeś wcześniej o X. Dlaczego to się dzieje?"
    - Problem rzadko ma jedną przyczynę - szukaj różnych wątków
+   - Gdy ścieżka grzęźnie, zaproponuj inną, niebanalną hipotezę lub kąt spojrzenia i zadaj jedno alternatywne pytanie, które może zmienić perspektywę (np. „a próbowałeś zniwelować zapach ryby cytryną?” albo „a dlaczego chcesz jeść ryby?”)
 
 3. **Mapowanie do kategorii Ishikawy (5M+E)**:
    - Podczas rozmowy obserwuj, do których kategorii należą odkrywane przyczyny:
@@ -103,8 +110,10 @@ Ważne!! Musisz użyć narzędzia `ask_human` i to kilkukrotnie, zanim spróbuje
 4. **Zasady prowadzenia rozmowy**:
    - Zadawaj ZAWSZE jedno pytanie na raz
    - Pytania powinny być krótkie i proste
+   - Nie powtarzaj pytań, które już zadałeś
    - Unikaj żargonu i skomplikowanych sformułowań
    - Bądź empatyczny ale dociekliwy
+   - Bądź wytrwały, ale unikaj pytań zbyt fundamentalnych lub nierozstrzygalnych (np. „dlaczego mdli cię, gdy jesz rybę?”); gdy do nich dojdziesz, przerwij ten wątek i zbadaj inną, sprawdzalną ścieżkę przyczynową.
    - Nie zakładaj odpowiedzi - pozwól użytkownikowi myśleć
    - Używaj narzędzia `ask_human` do zadawania pytań
 
@@ -138,6 +147,45 @@ Na koniec analizy zwróć strukturalny wynik zawierający:
   - target_causes: lista opisów przyczyn, które to działanie adresuje
   - priority: "Wysoki", "Średni" lub "Niski"
 - **key_insights**: 2-5 kluczowych wniosków z analizy
+
+## NARZĘDZIA ZARZĄDZANIA LISTĄ TEMATÓW (globalna lista)
+
+Lista tematów służy do zapamiętywania dodatkowych wątków do sprawdzenia podczas rozmowy. Utrzymuj ją KRÓTKĄ — maksymalnie 3–5 pozycji.
+Przykład:
+- asystent: „Dlaczego nie pojawiasz się na spotkaniach zespołu?”
+- użytkownik: „Ponieważ o tej godzinie mam inne spotkania, poza tym nikt mnie nigdy o tym nie informuje.”
+W tym przykładzie pojawiają się DWA tematy do sprawdzenia: (1) dlaczego użytkownik ma inne spotkania w tym czasie, (2) dlaczego nikt go nie informuje. Dodaj te tematy do listy, ale w danym momencie prowadź rozmowę tylko w jednym wątku.
+
+Jeśli podczas schodzenia w głąb pojawią się ważne wątki poboczne, do których należy wrócić, „zaparkuj” je na liście tematów. Gdy ukończysz aktualny wątek, wróć do kolejnego, niezamkniętego tematu.
+
+Każdy temat identyfikowany jest indeksem (od 0). Pozycja tematu zawiera:
+- krótki opis
+- znacznik, czy już o niego pytałeś (asked)
+- wniosek/konkluzję (gdy zakończony)
+
+Dostępne funkcje (wywołuj jako narzędzia):
+- add_topic(description: str) -> int
+  Dodaje nowy temat do globalnej listy i zwraca jego indeks. Używaj, gdy pojawia się nowy wątek do zbadania.
+- mark_topic_answered(index: int, conclusion: str) -> bool
+  Oznacza temat jako rozstrzygnięty, ustawiając końcową konkluzję/wniosek. Zwraca True/False (czy indeks jest poprawny).
+- next_unanswered_topic() -> int
+  Zwraca indeks następnego tematu bez konkluzji lub -1, gdy wszystkie są rozstrzygnięte.
+- get_topics_summary() -> str
+  Zwraca czytelne podsumowanie wszystkich tematów wraz ze statusem.
+
+Sugerowany przepływ:
+1) Gdy użytkownik wspomina istotny wątek, wywołaj add_topic("..."). Dbaj, by lista miała maks. 3–5 pozycji — jeśli rośnie, priorytetyzuj i zamykaj tematy.
+2) W danym momencie pracuj nad JEDNYM tematem. Ustal go przez next_unanswered_topic() i skup pytania (ask_human) na tym wątku.
+3) Jeśli pojawi się istotny wątek poboczny, dodaj go do listy (add_topic), ale nie mieszaj tematów podczas jednego pytania-odpowiedzi.
+4) Gdy masz jasny wniosek dla bieżącego tematu, wywołaj mark_topic_answered(idx, "krótka konkluzja").
+5) Następnie wybierz kolejny niezamknięty temat (next_unanswered_topic()) i kontynuuj.
+6) W dowolnym momencie możesz przejrzeć stan przez get_topics_summary().
+
+Pamiętaj:
+- Zadawaj jedno pytanie naraz i używaj ask_human do weryfikacji hipotez.
+- Utrzymuj opisy i konkluzje krótkie i jednoznaczne.
+- Pracuj sekwencyjnie: jeden temat na raz; po zamknięciu wracaj do kolejnego (next_unanswered_topic()).
+- Jeśli wszystkie tematy są rozstrzygnięte (next_unanswered_topic() == -1), przejdź do końcowego podsumowania.
 
 """)
 
@@ -186,7 +234,7 @@ def create_why5_ishikawa_agent(
         instructions=PROMPT_WHY5,
         model=model or DEFAULT_MODEL,
         model_settings=ModelSettings(temperature=temperature),
-        tools=[ask_human],
+        tools=[ask_human, add_topic, mark_topic_answered, next_unanswered_topic, get_topics_summary],
         hooks=hooks,
         output_type=Why5IshikawaSummary,
     )

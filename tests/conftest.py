@@ -1,3 +1,10 @@
+import sys
+import pathlib
+# Ensure project root is on sys.path so local packages like 'tools' are importable during test collection
+_PROJECT_ROOT = pathlib.Path(__file__).resolve().parent.parent
+if str(_PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(_PROJECT_ROOT))
+
 import os
 import pytest
 import socket
