@@ -14,6 +14,10 @@ from .topics_registry import (
     get_topics_summary,
 )
 
+from .ask_human import (
+    ask_human,
+)
+
 __all__ = [
     "TopicItem",
     "TopicList",
@@ -21,4 +25,5 @@ __all__ = [
     "mark_topic_answered",
     "next_unanswered_topic",
     "get_topics_summary",
+    "ask_human",
 ]

@@ -4,7 +4,6 @@ import os
 from typing import Optional
 
 import dotenv
-from openai.types.responses import EasyInputMessageParam
 
 dotenv.load_dotenv()
 
@@ -19,8 +18,7 @@ from agents import (
     ItemHelpers,
     set_default_openai_api,
     set_default_openai_client,
-    set_tracing_disabled, ModelSettings,
-)
+    set_tracing_disabled, )
 from agents.stream_events import (
     AgentUpdatedStreamEvent,
     RawResponsesStreamEvent,
@@ -34,11 +32,15 @@ from agents.items import (
     ModelResponse,
 )
 
-from agents_why5_ishikawa import (
-    create_why5_ishikawa_agent,
-    render_why5_ishikawa_summary,
+from agents.agents_why5 import (
+    create_why5_agent,
+    render_why5_summary,
 )
-from agents_temperature_check import (
+from agents.agents_ishikawa import (
+    create_ishikawa_agent,
+    render_ishikawa_summary,
+)
+from agents.agents_temperature_check import (
     create_temperature_check_agent,
     render_temperature_report,
 )
@@ -77,21 +79,24 @@ PROVIDER_CONFIGS = {
 }
 
 # Agent registry (positional agent ID arg)
-AGENT_IDS = ("why5_ishikawa", "temperature_check")
+AGENT_IDS = ("why5", "ishikawa", "temperature_check")
 
 AGENT_FACTORIES = {
-    "why5_ishikawa": create_why5_ishikawa_agent,
+    "why5": create_why5_agent,
+    "ishikawa": create_ishikawa_agent,
     "temperature_check": create_temperature_check_agent,
 }
 
 AGENT_RENDERERS = {
-    "why5_ishikawa": render_why5_ishikawa_summary,
+    "why5": render_why5_summary,
+    "ishikawa": render_ishikawa_summary,
     "temperature_check": render_temperature_report,
 }
 
 # Default initial input per agent
 AGENT_DEFAULT_INPUTS = {
-    "why5_ishikawa": "Zapytaj mnie o problem, który chcę przeanalizować.",
+    "why5": "Zapytaj mnie o problem, który chcesz przeanalizować metodą '5 x Dlaczego'.",
+    "ishikawa": "Zapytaj mnie o problem, który chcesz przeanalizować z użyciem diagramu Ishikawy (5M+E).",
     "temperature_check": "Jaka jest pogoda w Gliwicach?",
 }
 
@@ -110,7 +115,7 @@ def parse_args():
     parser.add_argument(
         "agent",
         choices=AGENT_IDS,
-        help="Identyfikator agenta (wymagany). Dostępne: why5_ishikawa, temperature_check",
+        help="Identyfikator agenta (wymagany). Dostępne: why5, ishikawa, temperature_check",
     )
     parser.add_argument(
         "--provider",
