@@ -18,7 +18,10 @@ from agents import (
     ItemHelpers,
     set_default_openai_api,
     set_default_openai_client,
-    set_tracing_disabled, )
+    set_tracing_disabled,
+    RunConfig,
+    ModelSettings,
+)
 from agents.stream_events import (
     AgentUpdatedStreamEvent,
     RawResponsesStreamEvent,
@@ -32,18 +35,19 @@ from agents.items import (
     ModelResponse,
 )
 
-from agents.agents_why5 import (
+from local_agents.agents_why5 import (
     create_why5_agent,
     render_why5_summary,
 )
-from agents.agents_ishikawa import (
+from local_agents.agents_ishikawa import (
     create_ishikawa_agent,
     render_ishikawa_summary,
 )
-from agents.agents_temperature_check import (
+from local_agents.agents_temperature_check import (
     create_temperature_check_agent,
     render_temperature_report,
 )
+from local_agents.in_memory_session import InMemorySession
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -238,11 +242,23 @@ async def main():
     # Determine model to use with env fallback
     model_to_use = args.model or os.getenv("MODEL", DEFAULT_MODEL)
 
+    auto_reasoning_model = model_to_use.startswith("gpt-5")
+
     # Build the agent using selected factory (agent-specific config resides in dedicated module)
     agent = AGENT_FACTORIES[args.agent](
         model=model_to_use,
         hooks=CustomAgentHooks(),
-        temperature=0.1,
+        temperature=0.1 if not auto_reasoning_model else None,
+    )
+
+    # In-memory session: keep only a small sliding window of recent turns
+    session = InMemorySession(session_id="dorsz_cli", max_items=4)
+
+    # Global run configuration, including an explicit cap on output tokens
+    run_config = RunConfig(
+        model_settings=ModelSettings(
+            max_tokens=2048 if not auto_reasoning_model else None,
+        ),
     )
 
     print("DORSZ - Dokładne Odpytywanie Rozpoznające Sedno Zagadnienia")
@@ -253,8 +269,14 @@ async def main():
     # Initial input for agent runtime
     initial_input = AGENT_DEFAULT_INPUTS[args.agent]
 
-    # Run the agent without streaming (streaming support provided by process_stream)
-    result = await Runner.run(agent, input=initial_input, max_turns=50)
+    # Run the agent with limited in-memory history and explicit output token cap
+    result = await Runner.run(
+        agent,
+        input=initial_input,
+        session=session,
+        run_config=run_config,
+        max_turns=50,
+    )
 
     # Print the final structured result using agent-specific renderer
     summary = result.final_output
