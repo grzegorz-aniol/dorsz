@@ -1,5 +1,9 @@
 # DORSZ - Dokładne Odpytywanie Rozpoznające Sedno Zagadnienia
 
+<p style="text-align: center;">
+<img src="img/dorsz.png" alt="Alt text" width="500">
+</p>
+
 Uniwersalny runtime dla wielu agentów AI (obecnie: Why5, Ishikawa oraz Temperature-Check) korzystających z interfejsu OpenAI-compatible. Projekt jest nastawiony na dewelopera Pythona: używa uv do zarządzania środowiskiem i zależnościami, a uruchamianie odbywa się przez `uv run`.
 
 ## Szybki start
@@ -178,7 +182,7 @@ Domyślne adresy bazowe (zdefiniowane w `main.py`):
 - Lokalny endpoint (np. LMS Studio): `http://localhost:1234/v1`
 - OpenAI: używa domyślnych ustawień biblioteki OpenAI (wymaga `OPENAI_API_KEY`)
 
-Zmienna `--provider` przyjmuje wartości: `local` (domyślny), `openai`.
+Parameter `--provider` przyjmuje wartości: `local` (domyślny), `openai`.
 
 ---
 
@@ -275,6 +279,7 @@ brew install llama.cpp
 ```bash
 llama-server --port 1234 -m ./Bielik-4.5B-v3.0-Instruct-GGUF/Bielik-4.5B-v3.0-Instruct.Q8_0.gguf
 ```
+Można również podać parametr `-c` określający rozmiar kontekstu w bajtach (zajrzyj do karty modelu na HF aby sprawdzić dla jakiego rozmiaru kontekstu był trenowany model).
 Serwer będzie dostępny pod adresem `http://localhost:1234/v1`.
 Server nie wymaga podania nazwy modelu przy wywołaniach API, ale dla spujności możemy go używać. 
 
@@ -298,4 +303,4 @@ Jeśli wolisz interfejs graficzny, skorzystaj z projektu Jan:
 
 Uwagi:
 - W przypadku ograniczeń pamięci wybierz lżejszą kwantyzację (np. Q6_K, Q5_K_M). Wersja Q8_0 to dobry kompromis jakości/szybkości na CPU.
-- Możesz ustawić domyślny model w `.env` (zmienna `MODEL`), a następnie pominąć flagę `--model` przy uruchamianiu.
+- Możesz ustawić domyślny model w `.env` (zmienna `MODEL`), a następnie pominąć parametr `--model` przy uruchamianiu.
