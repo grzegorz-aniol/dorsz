@@ -1,6 +1,6 @@
 # DORSZ - Dokładne Odpytywanie Rozpoznające Sedno Zagadnienia
 
-<p style="text-align: center;">
+<p align="center">
 <img src="img/dorsz.png" alt="Alt text" width="500">
 </p>
 
