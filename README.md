@@ -276,9 +276,17 @@ brew install llama.cpp
 - Alternatywnie z kodu źródłowego: https://github.com/ggml-org/llama.cpp
 
 2) Uruchomienie serwera OpenAI-compatible:
+
+Z Bielikiem v2.6
+```bash
+llama-server --port 1234 -c 32768 -m ./Bielik-11B-v2.6-Instruct-GGUF/Bielik-11B-v2.6-Instruct.Q8_0.gguf
+```
+
+Z Bielikiem v3.0
 ```bash
 llama-server --port 1234 -m ./Bielik-4.5B-v3.0-Instruct-GGUF/Bielik-4.5B-v3.0-Instruct.Q8_0.gguf
 ```
+
 Można również podać parametr `-c` określający rozmiar kontekstu w bajtach (zajrzyj do karty modelu na HF aby sprawdzić dla jakiego rozmiaru kontekstu był trenowany model).
 Serwer będzie dostępny pod adresem `http://localhost:1234/v1`.
 Server nie wymaga podania nazwy modelu przy wywołaniach API, ale dla spujności możemy go używać. 
