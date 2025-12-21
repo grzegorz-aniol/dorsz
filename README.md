@@ -289,7 +289,7 @@ llama-server --port 1234 -m ./Bielik-4.5B-v3.0-Instruct-GGUF/Bielik-4.5B-v3.0-In
 
 Można również podać parametr `-c` określający rozmiar kontekstu w bajtach (zajrzyj do karty modelu na HF aby sprawdzić dla jakiego rozmiaru kontekstu był trenowany model).
 Serwer będzie dostępny pod adresem `http://localhost:1234/v1`.
-Server nie wymaga podania nazwy modelu przy wywołaniach API, ale dla spujności możemy go używać. 
+Server nie wymaga podania nazwy modelu przy wywołaniach API, ale dla spójności możemy go używać. 
 
 3) Integracja z DORSZ:
 - Upewnij się, że `LOCAL_BASE_URL=http://localhost:1234/v1` (np. w `.env`).
