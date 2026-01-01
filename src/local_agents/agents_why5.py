@@ -4,7 +4,7 @@ from typing import Optional
 
 from pydantic import BaseModel, Field
 
-from agents import Agent, ModelSettings, AgentHooks
+from agents import Agent, ModelSettings, AgentHooks, OpenAIChatCompletionsModel
 
 from tools import ask_human
 
@@ -97,7 +97,7 @@ PROMPT_WHY5_SIMPLE = textwrap.dedent(
 )
 
 def create_why5_agent(
-    model: str,
+    model: OpenAIChatCompletionsModel,
     hooks: Optional[AgentHooks] = None,
     temperature: float = TEMPERATURE,
 ) -> Agent:

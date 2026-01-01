@@ -20,7 +20,7 @@ from agents import (
     set_default_openai_client,
     set_tracing_disabled,
     RunConfig,
-    ModelSettings,
+    ModelSettings, OpenAIChatCompletionsModel,
 )
 from agents.stream_events import (
     AgentUpdatedStreamEvent,
@@ -79,6 +79,7 @@ LOCAL_API_KEY = os.getenv("LOCAL_API_KEY", "EMPTY")
 
 PROVIDER_CONFIGS = {
     "local": {"base_url": LOCAL_BASE_URL, "api_key": LOCAL_API_KEY},
+    "ollama": {"base_url": LOCAL_BASE_URL, "api_key": LOCAL_API_KEY},  # Uses Ollama defaults
     "openai": {"base_url": None, "api_key": None},  # Uses OpenAI defaults
 }
 
@@ -125,7 +126,7 @@ def parse_args():
         "--provider",
         type=str,
         default=DEFAULT_PROVIDER,
-        choices=["local", "openai"],
+        choices=["local", "ollama", "openai"],
         help="Provider do użycia (domyślnie: local)",
     )
     parser.add_argument(
@@ -175,12 +176,14 @@ def create_client(provider: str) -> AsyncOpenAI:
     if provider == "openai":
         # For OpenAI, use default client (requires OPENAI_API_KEY env var)
         client = AsyncOpenAI()
-    else:
+    elif provider == "local" or provider == "ollama":
         # For local provider
         client = AsyncOpenAI(
             base_url=provider_config["base_url"],
             api_key=provider_config["api_key"],
         )
+    else:
+        raise ValueError(f"Unknown model provider: {provider}")
 
     # Set as default OpenAI client and configure for Bielik
     set_default_openai_client(client=client, use_for_tracing=False)
@@ -237,7 +240,7 @@ async def main():
     args = parse_args()
 
     # Configure client based on provider
-    create_client(args.provider)
+    client = create_client(args.provider)
 
     # Determine model to use with env fallback
     model_to_use = args.model or os.getenv("MODEL", DEFAULT_MODEL)
@@ -246,7 +249,7 @@ async def main():
 
     # Build the agent using selected factory (agent-specific config resides in dedicated module)
     agent = AGENT_FACTORIES[args.agent](
-        model=model_to_use,
+        model=OpenAIChatCompletionsModel(model=model_to_use, openai_client=client),
         hooks=CustomAgentHooks(),
         temperature=0.1 if not auto_reasoning_model else None,
     )
