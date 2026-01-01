@@ -11,7 +11,7 @@ Uniwersalny runtime dla wielu agentów AI (obecnie: Why5, Ishikawa oraz Temperat
 1) Wymagania:
 - Python >= 3.13
 - [uv](https://github.com/astral-sh/uv)
-- Uruchomiony provider LLM: lokalny endpoint OpenAI-compatible (np. LMS Studio) lub OpenAI
+- Uruchomiony provider LLM: lokalny endpoint OpenAI-compatible (np. `llama-server`) lub OpenAI
 
 2) Instalacja uv:
 - macOS (Homebrew):
@@ -30,13 +30,13 @@ cd dorsz
 uv sync
 ```
 
-4) Uruchom pierwszy agent (przykład z LMS Studio i modelem Bielik):
+4) Uruchom pierwszego agenta (przykład z lokalnym `llama-server` i modelem Bielik-11B-v3.0-Instruct):
 ```bash
-uv run python main.py why5 --provider local --model bielik-11b-v2.6-instruct
+uv run python main.py why5 --provider local --model Bielik-11B-v3.0-Instruct
 ```
 
 Uwaga:
-- Dla lokalnego endpointu (np. LMS Studio) włącz OpenAI-compatible API na `http://localhost:1234/v1`.
+- Lokalny endpoint skonfigurowany jest na `http://localhost:1234/v1`.
 - Dla OpenAI ustaw `OPENAI_API_KEY` w środowisku lub pliku `.env`.
 
 ---
@@ -57,8 +57,8 @@ Przykłady (z użyciem modelu Bielik oraz innych):
 
 - Why5:
 ```bash
-# Lokalny endpoint + Bielik
-uv run python main.py why5 --provider local --model bielik-11b-v2.6-instruct
+# Lokalny endpoint + Bielik-11B-v3.0-Instruct
+uv run python main.py why5 --provider local --model Bielik-11B-v3.0-Instruct
 
 
 # OpenAI (wymaga OPENAI_API_KEY)
@@ -67,8 +67,8 @@ uv run python main.py why5 --provider openai --model gpt-4o
 
 - Ishikawa:
 ```bash
-# Lokalny endpoint + Bielik
-uv run python main.py ishikawa --provider local --model bielik-11b-v2.6-instruct
+# Lokalny endpoint + Bielik-11B-v3.0-Instruct
+uv run python main.py ishikawa --provider local --model Bielik-11B-v3.0-Instruct
 
 
 # OpenAI (wymaga OPENAI_API_KEY)
@@ -77,8 +77,8 @@ uv run python main.py ishikawa --provider openai --model gpt-4o
 
 - Temperature-Check:
 ```bash
-# Lokalny endpoint + Bielik
-uv run python main.py temperature_check --provider local --model bielik-11b-v2.6-instruct
+# Lokalny endpoint + Bielik-11B-v3.0-Instruct
+uv run python main.py temperature_check --provider local --model Bielik-11B-v3.0-Instruct
 
 
 # OpenAI (wymaga OPENAI_API_KEY)
@@ -103,16 +103,16 @@ Jak działa:
 3. Kończy, gdy dotrze do przyczyny, którą można bezpośrednio zaadresować działaniem, albo gdy dalsze pytania nie wnoszą nowych informacji.
 4. Generuje strukturalne podsumowanie: sformułowanie problemu, łańcuch „Dlaczego?”, główne przyczyny źródłowe, działania naprawcze i wnioski (model `Why5Summary` w `agents_why5.py`).
 
-Przykład uruchomienia z Bielik:
+Przykład uruchomienia z Bielik-11B-v3.0-Instruct:
 ```bash
-uv run python main.py why5 --provider local --model bielik-11b-v2.6-instruct
+uv run python main.py why5 --provider local --model Bielik-11B-v3.0-Instruct
 ```
 
 Przykładowa sesja (fragment):
 ```
 DORSZ - Dokładne Odpytywanie Rozpoznające Sedno Zagadnienia
 Provider: local
-Model: bielik-11b-v2.6-instruct
+Model: Bielik-11B-v3.0-Instruct
 Agent: why5
 Wpisz swój problem lub pytanie, aby rozpocząć analizę.
 
@@ -151,9 +151,9 @@ Jak działa:
 3. Korzysta z globalnej listy tematów (`add_topic`, `mark_topic_answered`, `next_unanswered_topic`, `get_topics_summary`), żeby parkować poboczne wątki.
 4. Generuje strukturalne podsumowanie: sformułowanie problemu, listę przyczyn z kategoriami Ishikawy, działania naprawcze, kluczowe wnioski (model `IshikawaSummary` w `agents_ishikawa.py`).
 
-Przykład uruchomienia z Bielik:
+Przykład uruchomienia z Bielik-11B-v3.0-Instruct:
 ```bash
-uv run python main.py ishikawa --provider local --model bielik-11b-v2.6-instruct
+uv run python main.py ishikawa --provider local --model Bielik-11B-v3.0-Instruct
 ```
 
 ### 3) Agent Temperature-Check
@@ -169,9 +169,9 @@ Domyślne wejście:
 - Jeśli nie podano miejsca, wykorzystywane jest „Warszawa”.
 - W aktualnym runtime wejście początkowe jest dostarczane z `AGENT_DEFAULT_INPUTS` (patrz `main.py`). Aby zmienić domyślne miejsce startowe, zaktualizuj `AGENT_DEFAULT_INPUTS["temperature_check"]`.
 
-Przykład uruchomienia z Bielik:
+Przykład uruchomienia z Bielik-11B-v3.0-Instruct:
 ```bash
-uv run python main.py temperature_check --provider local --model bielik-11b-v2.6-instruct
+uv run python main.py temperature_check --provider local --model Bielik-11B-v3.0-Instruct
 ```
 
 ---
@@ -179,35 +179,22 @@ uv run python main.py temperature_check --provider local --model bielik-11b-v2.6
 ## Konfiguracja providerów
 
 Domyślne adresy bazowe (zdefiniowane w `main.py`):
-- Lokalny endpoint (np. LMS Studio): `http://localhost:1234/v1`
+- Lokalny endpoint (np. `llama-server`): `http://localhost:1234/v1`
 - OpenAI: używa domyślnych ustawień biblioteki OpenAI (wymaga `OPENAI_API_KEY`)
 
 Parameter `--provider` przyjmuje wartości: `local` (domyślny), `openai`.
 
 ---
 
-## Struktura kodu
 
-- `main.py` — ogólny runtime:
-  - Rejestr agentów, fabryki (`AGENT_FACTORIES`) i renderery (`AGENT_RENDERERS`)
-  - Domyślne wejścia startowe (`AGENT_DEFAULT_INPUTS`)
-  - Konfiguracja providerów i klienta OpenAI-compatible
-  - Pętla uruchomieniowa i drukowanie wyników
-- `agents_why5.py` — definicja agenta Why5:
-  - Instrukcje (prompt), narzędzie `ask_human`, model Pydantic `Why5Summary`, renderer podsumowania
-- `agents_ishikawa.py` — definicja agenta Ishikawa:
-  - Instrukcje (prompt), narzędzie `ask_human`, narzędzia do zarządzania tematami, modele Pydantic `Ishikawa*`, renderer podsumowania
-- `agents_temperature_check.py` — definicja agenta Temperature-Check:
-  - Narzędzie `get_temperature`, struktura `TemperatureReport`, renderer
 
----
 
 ## Konfiguracja (.env)
 
 Plik `.env` (opcjonalny), wczytywany automatycznie:
 ```bash
 # Default model (used if --model is omitted)
-MODEL=Bielik-4.5B-v3.0-Instruct.Q8_0.gguf
+MODEL=Bielik-11B-v3.0-Instruct
 
 # OpenAI (cloud):
 OPENAI_API_KEY=...
@@ -216,8 +203,23 @@ OPENAI_API_KEY=...
 LOCAL_BASE_URL=http://localhost:1234/v1
 LOCAL_API_KEY=EMPTY
 
-# Opcjonalnie: inne ustawienia środowiskowe
+# Langfuse (optional observability)
+LANGFUSE_SECRET_KEY=sk-..
+LANGFUSE_PUBLIC_KEY=pk-..
+LANGFUSE_BASE_URL=http://localhost:9300
 ```
+
+Opis kluczowych zmiennych środowiskowych:
+
+| Zmienna | Wymagane | Opis |
+| --- | --- | --- |
+| `MODEL` | Nie (domyślnie `Bielik-11B-v3.0-Instruct`) | Nazwa modelu przekazywana do providerów lokalnych; używana także przez testy, jeśli nie podasz `--model`. |
+| `OPENAI_API_KEY` | Tak, gdy korzystasz z OpenAI | Klucz API wymagany do połączenia z chmurą OpenAI. |
+| `LOCAL_BASE_URL` | Nie (domyślnie `http://localhost:1234/v1`) | Adres endpointu OpenAI-compatible uruchomionego lokalnie, np. `llama-server`. |
+| `LOCAL_API_KEY` | Nie | Klucz dla lokalnego endpointu (często `EMPTY`, jeśli serwer nie wymaga autoryzacji). |
+| `LANGFUSE_SECRET_KEY` / `LANGFUSE_PUBLIC_KEY` / `LANGFUSE_BASE_URL` | Opcjonalnie | Dane dostępu do Langfuse, jeśli chcesz wysyłać telemetrię/obserwowalność. |
+
+Pełny zestaw zmiennych wraz z komentarzami znajdziesz w `.env.example`.
 
 ---
 
@@ -233,7 +235,7 @@ Przykłady:
 ```bash
 uv run pytest
 uv run pytest -q
-uv run pytest -q --model Bielik-4.5B-v3.0-Instruct.Q8_0.gguf
+uv run pytest -q --model Bielik-11B-v3.0-Instruct
 ```
 
 ---
@@ -249,66 +251,40 @@ uv run pytest -q --model Bielik-4.5B-v3.0-Instruct.Q8_0.gguf
 ## Dodatkowe uwagi
 
 - Parametr `--model` jest opcjonalny; jeśli pominięty, użyty zostanie `MODEL` z env lub domyślny.
-- Dla lokalnego endpointu (np. LMS Studio) wymagane jest uruchomienie serwera zgodnego z OpenAI API pod wskazanym adresem.
+- Dla lokalnego endpointu (np. `llama-server`) wymagane jest uruchomienie serwera zgodnego z OpenAI API pod wskazanym adresem.
 
 ---
 
-## Inferencja modelu Bielik (lokalnie, GGUF)
+## Inferencja modelu Bielik (llama.cpp + GGUF)
 
-Poniżej opisano, jak uruchomić inferencję lokalnego modelu oraz jak wpiąć go do DORSZ jako lokalny provider.
+Wszystkie przykłady wykorzystują model [speakleash/Bielik-11B-v3.0-Instruct](https://huggingface.co/speakleash/Bielik-11B-v3.0-Instruct) oraz jego wariant GGUF [speakleash/Bielik-11B-v3.0-Instruct-GGUF](https://huggingface.co/speakleash/Bielik-11B-v3.0-Instruct-GGUF). Model może wymagać zalogowania w Hugging Face i akceptacji licencji.
 
-### Krok 1: Pobierz model GGUF
+### Krok 1: Przygotuj dostęp do Hugging Face
 
-- Przejdź do repozytorium na Hugging Face, np.:
-  https://huggingface.co/speakleash/Bielik-4.5B-v3.0-Instruct-GGUF/tree/main
-- Pobierz wariant w oczekiwanej kwantyzacji (np. Q8_0) lub model bez kwantyzacji.
-- Umieść plik w lokalnym katalogu, np. `./Bielik-4.5B-v3.0-Instruct-GGUF/`.
+- Zaloguj się w `huggingface-cli login` lub ustaw zmienną `HF_TOKEN` z tokenem mającym dostęp do modelu.
+- Zaakceptuj warunki korzystania na karcie modelu (jeśli wymagane).
 
-Przykładowy plik: `Bielik-4.5B-v3.0-Instruct.Q8_0.gguf`
+### Krok 2: Uruchom lokalny serwer llama.cpp
 
-### Opcja A: CLI (llama.cpp)
+Zapoznaj się ze szczegółami instalacji tutaj: [https://github.com/ggerganov/llama.cpp](https://github.com/ggerganov/llama.cpp). Po instalacji model może zostać pobrany automatycznie przy pierwszym uruchomieniu dzięki flagom `-hf`. Poniższa komenda startuje `llama-server` z kwantyzacją Q8_0 i kontekstem 32768 tokenów:
 
-1) Instalacja llama.cpp:
-- macOS (Homebrew):
 ```bash
-brew install llama.cpp
-```
-- Alternatywnie z kodu źródłowego: https://github.com/ggml-org/llama.cpp
-
-2) Uruchomienie serwera OpenAI-compatible:
-
-Z Bielikiem v2.6
-```bash
-llama-server --port 1234 -c 32768 -m ./Bielik-11B-v2.6-Instruct-GGUF/Bielik-11B-v2.6-Instruct.Q8_0.gguf
+llama-server --port 1234 -c 32768 \
+    -hf speakleash/Bielik-11B-v3.0-Instruct-GGUF:Bielik-11B-v3.0-Instruct.Q8_0.gguf
 ```
 
-Z Bielikiem v3.0
+Serwer OpenAI-compatible będzie dostępny pod `http://localhost:1234/v1`. Jeśli zmienisz port lub kontekst, zaktualizuj odpowiednio parametr `-c` i zmienną `LOCAL_BASE_URL`.
+
+### Krok 3: Integracja z DORSZ
+
+1. Ustaw `LOCAL_BASE_URL=http://localhost:1234/v1` (np. w `.env`).
+2. (Opcjonalnie) Ustaw `MODEL=Bielik-11B-v3.0-Instruct`, aby nie podawać go w CLI.
+3. Uruchom dowolnego agenta, wskazując model Bielik-11B-v3.0-Instruct:
+
 ```bash
-llama-server --port 1234 -m ./Bielik-4.5B-v3.0-Instruct-GGUF/Bielik-4.5B-v3.0-Instruct.Q8_0.gguf
+uv run python main.py why5 --provider local --model Bielik-11B-v3.0-Instruct
+uv run python main.py ishikawa --provider local --model Bielik-11B-v3.0-Instruct
+uv run python main.py temperature_check --provider local --model Bielik-11B-v3.0-Instruct
 ```
 
-Można również podać parametr `-c` określający rozmiar kontekstu w bajtach (zajrzyj do karty modelu na HF aby sprawdzić dla jakiego rozmiaru kontekstu był trenowany model).
-Serwer będzie dostępny pod adresem `http://localhost:1234/v1`.
-Server nie wymaga podania nazwy modelu przy wywołaniach API, ale dla spójności możemy go używać. 
-
-3) Integracja z DORSZ:
-- Upewnij się, że `LOCAL_BASE_URL=http://localhost:1234/v1` (np. w `.env`).
-- Uruchom agenta, wskazując nazwę modelu (tu: nazwę pliku GGUF):
-```bash
-uv run python main.py why5 --provider local --model Bielik-4.5B-v3.0-Instruct.Q8_0.gguf
-```
-Analogicznie możesz uruchomić `ishikawa` oraz `temperature_check`.
-
-### Opcja B: UI (Jan)
-
-Jeśli wolisz interfejs graficzny, skorzystaj z projektu Jan:
-- Repozytorium: https://github.com/janhq/jan
-- Kroki:
-  1. Zainstaluj aplikację (patrz „Releases” na GitHub).
-  2. Dodaj model, wskazując pobrany plik `.gguf` (Import/Local model).
-  3. Rozmawiaj z modelem bezpośrednio w UI.
-  4. (Opcjonalnie) Jeśli w Jan dostępne jest lokalne API zgodne z OpenAI, włącz je i wskaż jego adres w `LOCAL_BASE_URL`, aby używać Jana jako providera dla DORSZ.
-
-Uwagi:
-- W przypadku ograniczeń pamięci wybierz lżejszą kwantyzację (np. Q6_K, Q5_K_M). Wersja Q8_0 to dobry kompromis jakości/szybkości na CPU.
-- Możesz ustawić domyślny model w `.env` (zmienna `MODEL`), a następnie pominąć parametr `--model` przy uruchamianiu.
+To wszystko – jedynym wymaganym komponentem do inferencji jest `llama.cpp` z automatycznym pobieraniem GGUF.

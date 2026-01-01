@@ -30,6 +30,20 @@ Deliver small, well-tested Python changes with clean APIs, strong typing, and au
 
 ---
 
+## Codebase Structure Expectations
+
+* `main.py` — runtime entrypoint: rejestr agentów, fabryki (`AGENT_FACTORIES`), renderery (`AGENT_RENDERERS`), domyślne wejścia (`AGENT_DEFAULT_INPUTS`) oraz pętla uruchomieniowa/obsługa providerów.
+* `src/local_agents/agents_why5.py` — instrukcje, narzędzie `ask_human`, model Pydantic `Why5Summary`, renderer podsumowania.
+* `src/local_agents/agents_ishikawa.py` — instrukcje, narzędzia do zarządzania tematami (`topics_registry`), modele Pydantic `Ishikawa*`, renderer podsumowania.
+* `src/local_agents/agents_temperature_check.py` — narzędzie `get_temperature`, struktura `TemperatureReport`, renderer.
+* `src/tools/` — implementacje narzędzi współdzielonych (np. `ask_human`, `topics_registry`).
+* `tests/` — scenariusze jednostkowe i integracyjne (m.in. `test_agent_runner.py`, `test_in_memory_session.py`, `test_problems_registry.py`).
+
+Zachowuj tę strukturę przy dodawaniu nowych agentów lub narzędzi.
+
+---
+
+
 ## Agent Workflow (Always)
 
 1. **Plan** Before coding, list the files you’ll touch, data models you’ll add/modify, and tests you’ll write.
