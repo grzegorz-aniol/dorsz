@@ -202,7 +202,7 @@ class CustomAgentHooks(AgentHooks):
         agent,
         tool: Tool,
     ) -> None:
-        logger.info("Tool %s is about to be invoked by agent %s", tool.name, agent.name)
+        logger.debug("Tool %s is about to be invoked by agent %s", tool.name, agent.name)
 
     async def on_tool_end(
         self,
@@ -211,7 +211,7 @@ class CustomAgentHooks(AgentHooks):
         tool: Tool,
         result: str,
     ) -> None:
-        logger.info("Tool %s execution is done", tool.name)
+        logger.debug("Tool %s execution is done", tool.name)
 
     async def on_llm_start(
         self,
@@ -220,7 +220,7 @@ class CustomAgentHooks(AgentHooks):
         system_prompt: Optional[str],
         input_items: list[TResponseInputItem],
     ) -> None:
-        logger.info("%s", input_items)
+        logger.debug("%s", input_items)
 
     async def on_llm_end(
         self,
@@ -228,13 +228,13 @@ class CustomAgentHooks(AgentHooks):
         agent,
         response: ModelResponse,
     ) -> None:
-        logger.info("%s", response)
+        logger.debug("%s", response)
 
 
 async def main():
     # Konfiguracja logowania
     setup_logging()
-    logger.info("Logowanie skonfigurowane — start runtime")
+    logger.debug("Logowanie skonfigurowane — start runtime")
 
     # Parse command line arguments
     args = parse_args()
